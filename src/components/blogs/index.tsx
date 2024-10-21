@@ -6,6 +6,13 @@ import axiosInstance from "@/lib/axios";
 import BlogList from "./blog-list";
 import Header from "@/layout/header";
 import { Box, Modal } from "@mui/material";
+import { useDispatch, useSelector } from "react-redux";
+import { getDataBlog, getProfile } from "../../redux/actions";
+import { AppDispatch } from "../../redux/store";
+import { useUserContext } from "@/pages/_app";
+import { toast } from "react-toastify";
+import { resetDataCommentBlogs, resetDataCreateBlogs } from "@/redux/reducers";
+
 const style = {
   position: "absolute" as "absolute",
   top: "50%",
@@ -14,10 +21,9 @@ const style = {
   width: 400,
   bgcolor: "background.paper",
   borderRadius: "10px",
-  // border: "2px solid #000",
-  // boxShadow: 24,
   p: 4,
 };
+
 export interface Blog {
   id: number;
   title: string;
@@ -28,49 +34,45 @@ export interface Blog {
   updatedAt: Date; // Ngày cập nhật bài viết
 }
 const Blogs = () => {
-  const [blogs, setBlogs] = useState([]);
+  const { userId } = useUserContext();
   const [open, setOpen] = useState(false);
-  const [user, setUser] = useState({
-    id: null,
-    avatar: "",
-    username: "",
-    email: "",
-  });
+
+  const dispatch: AppDispatch = useDispatch();
+  const { dataCommentBlogs, dataCreateBlogs } = useSelector(
+    (state: any) => state
+  );
 
   useEffect(() => {
-    const fetchBlogs = async () => {
-      try {
-        try {
-          const response = await axiosInstance.get(
-            `http://localhost:4000/blogs/`
-          );
-          setBlogs(response.data);
-        } catch (err) {}
-      } catch (error) {
-        console.error("Lỗi khi tải danh sách blog:", error);
-      }
-    };
-
-    fetchBlogs();
-  }, []);
+    dispatch(getDataBlog());
+  }, [dispatch]);
 
   useEffect(() => {
-    const userId = localStorage.getItem("userId");
     if (userId) {
-      // Gọi API để lấy thông tin người dùng
-      const fetchUserData = async () => {
-        try {
-          const response = await axiosInstance.get(
-            `http://localhost:4000/users/${userId}`
-          );
-          setUser(response.data.user);
-        } catch (err) {}
-      };
-
-      fetchUserData();
-    } else {
+      dispatch(getProfile({ userId }));
     }
-  }, []);
+  }, [userId]);
+
+  useEffect(() => {
+    if (dataCommentBlogs) {
+      toast(dataCommentBlogs.message, {
+        type: "success",
+      });
+      dispatch(getDataBlog());
+      dispatch(resetDataCommentBlogs());
+    }
+  }, [dataCommentBlogs]);
+
+  useEffect(() => {
+    if (dataCreateBlogs) {
+      toast(dataCreateBlogs.message, {
+        type: "success",
+      });
+
+      dispatch(resetDataCreateBlogs());
+      dispatch(getDataBlog());
+      setOpen(false);
+    }
+  }, [dataCreateBlogs]);
 
   return (
     <div className="flex flex-col min-h-screen bg-[#fff] text-[black]">
@@ -84,7 +86,7 @@ const Blogs = () => {
         aria-describedby="modal-modal-description"
       >
         <Box sx={style}>
-          <BlogForm setOpen={setOpen} setBlogs={setBlogs} />
+          <BlogForm setOpen={setOpen} />
         </Box>
       </Modal>
       <div className="w-full flex items-center justify-center py-[10px]">
@@ -98,7 +100,7 @@ const Blogs = () => {
         </button>
       </div>
 
-      {blogs && <BlogList user={user} setBlogs={setBlogs} blogs={blogs} />}
+      <BlogList />
     </div>
   );
 };

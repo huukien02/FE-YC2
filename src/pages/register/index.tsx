@@ -1,27 +1,20 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import styles from "./index.module.scss";
 import classNames from "classnames/bind";
-const cx = classNames.bind(styles);
-import Head from "next/head";
 import DefaultLayout from "../../layout";
 import { Button, TextField } from "@mui/material";
-import axiosInstance from "@/lib/axios";
 import { toast } from "react-toastify";
-interface Response {
-  data: {
-    status: boolean;
-    message: string;
-    user: {
-      id: number;
-      createdAt: string;
-      updatedAt: string;
-      email: string;
-      password: string;
-      username: string;
-    };
-  };
-}
+import { AppDispatch } from "@/redux/store";
+import { useDispatch, useSelector } from "react-redux";
+import { userRegister } from "../../redux/actions";
+import { resetError, resetDataRegister } from "../../redux/reducers";
+
+const cx = classNames.bind(styles);
+
 export default function Index() {
+  const dispatch: AppDispatch = useDispatch();
+  const { dataRegister, error } = useSelector((state: any) => state);
+
   const [email, setEmail] = useState<string>("");
   const [username, setUsername] = useState<string>("");
   const [password, setPassword] = useState<string>("");
@@ -32,41 +25,41 @@ export default function Index() {
   });
 
   const handleRegister = async () => {
-    try {
-      let newErrors = { email: "", username: "", password: "" };
+    let newErrors = { email: "", username: "", password: "" };
+    if (!email) {
+      newErrors.email = "Email không được để trống";
+    }
+    if (!username) {
+      newErrors.username = "Username không được để trống";
+    }
+    if (!password) {
+      newErrors.password = "Password không được để trống";
+    }
+    setErrors(newErrors);
 
-      // Kiểm tra lỗi
-      if (!email) {
-        newErrors.email = "Email không được để trống";
-      }
-      if (!username) {
-        newErrors.username = "Username không được để trống";
-      }
-      if (!password) {
-        newErrors.password = "Password không được để trống";
-      }
-
-      setErrors(newErrors);
-      const response: Response = await axiosInstance.post(
-        "http://localhost:4000/users/create",
-        {
-          email,
-          username,
-          password,
-        }
-      );
-
-      if (response.data) {
-        toast("Tạo thành công", {
-          type: "success",
-        });
-      }
-    } catch (err: any) {
-      toast(err.response.data.message, {
-        type: "error",
-      });
+    if (username && password && email) {
+      dispatch(userRegister({ email, username, password }));
     }
   };
+
+  useEffect(() => {
+    if (error) {
+      toast(error.message, {
+        type: "error",
+      });
+      dispatch(resetError());
+    }
+    if (dataRegister) {
+      toast(dataRegister.message, {
+        type: "success",
+      });
+      setEmail("");
+      setUsername("");
+      setPassword("");
+      dispatch(resetError());
+      dispatch(resetDataRegister());
+    }
+  }, [error, dataRegister]);
 
   return (
     <DefaultLayout>

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   TextField,
   Button,
@@ -8,48 +8,40 @@ import {
   Box,
 } from "@mui/material";
 import axios from "axios";
+import { useUserContext } from "@/pages/_app";
+import { AppDispatch } from "@/redux/store";
+import { useDispatch, useSelector } from "react-redux";
+import { createBlogs, getDataBlog } from "@/redux/actions";
+import { resetDataCreateBlogs } from "@/redux/reducers";
+import { toast } from "react-toastify";
 
 interface BlogFormProps {
-  setBlogs: any;
   setOpen: any;
 }
 
-const BlogForm: React.FC<BlogFormProps> = ({ setBlogs, setOpen }) => {
+const BlogForm: React.FC<BlogFormProps> = ({ setOpen }) => {
+  const { userId } = useUserContext();
+  const dispatch: AppDispatch = useDispatch();
+  const { dataCreateBlogs } = useSelector((state: any) => state);
+
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [image, setImage] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
-    const userId = localStorage.getItem("userId");
-
-    const formData = new FormData();
-    formData.append("title", title);
-    formData.append("content", content);
-    formData.append("userId", userId ? userId : "0");
-    if (image) {
-      formData.append("image", image); // Thêm ảnh vào FormData
-    }
-
-    try {
-      const response = await axios.post(
-        "http://localhost:4000/blogs/create",
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data", // Đặt header cho multipart
-          },
-        }
-      );
-      if (response.data) {
-        setBlogs((prev: any) => [...prev, response.data]);
-        setOpen(false);
-      }
-      console.log("Bài viết đã được tạo:", response.data);
-    } catch (error) {
-      console.error("Lỗi khi tạo bài viết:", error);
+    if (userId) {
+      dispatch(createBlogs({ title, content, userId, image }));
     }
   };
+
+  useEffect(() => {
+    if (dataCreateBlogs) {
+      setOpen(false);
+      setPreview(null);
+    }
+  }, [dataCreateBlogs]);
 
   return (
     <Container maxWidth="sm">
@@ -87,17 +79,35 @@ const BlogForm: React.FC<BlogFormProps> = ({ setBlogs, setOpen }) => {
               onChange={(e) => {
                 if (e.target.files && e.target.files[0]) {
                   setImage(e.target.files[0]);
-                  //   setPreview(URL.createObjectURL(e.target.files[0]));
+                  setPreview(URL.createObjectURL(e.target.files[0]));
                 }
               }}
               style={{ display: "none" }} // Ẩn input file
               id="upload-image"
             />
-            <label htmlFor="upload-image">
-              <Button variant="contained" component="span">
-                Tải lên Ảnh
-              </Button>
-            </label>
+            {preview ? (
+              <div className="border flex py-[5px] justify-center">
+                <img
+                  onClick={() => {
+                    setPreview(null);
+                  }}
+                  className="cursor-pointer"
+                  src={preview ? preview : ""}
+                  alt="Avatar Preview"
+                  style={{
+                    width: "150px",
+                    height: "150px",
+                    objectFit: "cover",
+                  }}
+                />
+              </div>
+            ) : (
+              <label htmlFor="upload-image">
+                <Button variant="contained" component="span">
+                  Tải lên Ảnh
+                </Button>
+              </label>
+            )}
           </Grid>
           <Grid item xs={12}>
             <Box mt={2}>

@@ -1,0 +1,78 @@
+/* Item Blog */
+.item {
+  @apply border flex flex-col gap-[10px] w-[600px] rounded-[10px] py-[20px] px-[20px];
+
+  .user {
+    @apply flex gap-3 items-center;
+
+    .img {
+      @apply w-[40px] h-[40px] rounded-full;
+    }
+  }
+
+  .blog {
+    @apply flex flex-col gap-[5px];
+    .title {
+      @apply text-[15px] font-bold;
+    }
+  }
+
+  .img-blog {
+    @apply w-full h-[300px] flex items-center justify-center py-[10px] rounded-[5px] border;
+    .img {
+      @apply w-auto h-full;
+    }
+  }
+
+  .box-comment {
+    @apply w-full flex flex-col justify-start gap-[20px];
+
+    .user {
+      @apply flex items-center justify-start gap-[10px] w-full;
+
+      .avatar {
+        @apply rounded-full h-[25px] w-[25px] border border-[#dbd2d2] shadow-lg cursor-pointer;
+      }
+      .input {
+        @apply border border-[#cfcfcf] outline-0 h-[35px] w-[250px] px-[10px] rounded-[5px];
+      }
+    }
+    .list-comment {
+      @apply border py-[5px] px-[5px] rounded-[5px];
+
+      .list {
+        @apply overflow-auto max-h-[130px] flex flex-col gap-[10px];
+        .comment {
+          @apply px-[10px] min-h-[35px] flex gap-3 items-center;
+
+          .img {
+            @apply rounded-full h-[30px] w-[30px] border border-[#dbd2d2] shadow-lg cursor-pointer;
+          }
+
+          .btn {
+            @apply flex items-center justify-center w-[150px] h-[40px] rounded-[5px] bg-[#7070ec] text-[#fff];
+          }
+        }
+
+        /* Tùy chỉnh thanh cuộn */
+        &::-webkit-scrollbar {
+          width: 6px;
+        }
+
+        &::-webkit-scrollbar-track {
+          background: #f1f1f1;
+          border-radius: 10px;
+        }
+
+        &::-webkit-scrollbar-thumb {
+          background: #c7c7c7;
+          border-radius: 10px;
+        }
+
+        &::-webkit-scrollbar-thumb:hover {
+          background: #bbbbbb;
+        }
+      }
+    }
+  }
+}

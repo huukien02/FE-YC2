@@ -20,22 +20,22 @@ const Header = () => {
               Home
             </a>
             <a
-              href="/"
+              href="/blogs"
               className="text-gray-600 hover:text-blue-600 font-medium"
             >
-              About
+              Blogs
             </a>
             <a
-              href="/"
+              href="/profile"
               className="text-gray-600 hover:text-blue-600 font-medium"
             >
-              Services
+              Profile
             </a>
             <a
-              href="/"
+              href="/login"
               className="text-gray-600 hover:text-blue-600 font-medium"
             >
-              Contact
+              Login
             </a>
           </nav>
           {/* CTA Button */}

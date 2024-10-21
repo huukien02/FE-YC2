@@ -3,8 +3,7 @@ import React from "react";
 import Header from "./header/index";
 import Footer from "./footer/index";
 import { Head } from "next/document";
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css"; // Import CSS
+
 interface DefaultLayoutProps {
   children: React.ReactNode;
 }
@@ -17,7 +16,6 @@ const DefaultLayout: React.FC<DefaultLayoutProps> = ({ children }) => {
         {children}
       </main>
       <Footer />
-      <ToastContainer />
     </div>
   );
 };

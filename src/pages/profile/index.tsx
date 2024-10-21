@@ -5,8 +5,13 @@ import Head from "next/head";
 import DefaultLayout from "../../layout";
 import { Box, Button, Modal, TextField } from "@mui/material";
 import { useState, useEffect } from "react";
-import axiosInstance from "@/lib/axios";
 import { toast } from "react-toastify";
+import { AppDispatch } from "@/redux/store";
+import { useDispatch, useSelector } from "react-redux";
+import { getProfile, updateProfile, uploadAvatar } from "../../redux/actions";
+import { resetDataUploadAvatar } from "../../redux/reducers";
+import { useUserContext } from "../_app";
+
 const style = {
   position: "absolute" as "absolute",
   top: "50%",
@@ -14,97 +19,60 @@ const style = {
   transform: "translate(-50%, -50%)",
   width: 400,
   bgcolor: "background.paper",
-  // border: "2px solid #000",
-  // boxShadow: 24,
   p: 4,
 };
 
 export default function Index() {
+  const { userId } = useUserContext();
+
+  const dispatch: AppDispatch = useDispatch();
+  const { dataProfile, dataEditProfile, dataUploadAvatar, error } = useSelector(
+    (state: any) => state
+  );
+
   const [avatar, setAvatar] = useState<File | null>(null); // state để lưu avatar
-  const [user, setUser] = useState({
-    id: null,
-    avatar: "",
-    username: "",
-    email: "",
-  });
   const [email, setEmail] = useState<string>("");
   const [username, setUsername] = useState<string>("");
   const [preview, setPreview] = useState<string | null>(null);
 
   useEffect(() => {
-    const userId = localStorage.getItem("userId");
     if (userId) {
-      // Gọi API để lấy thông tin người dùng
-      const fetchUserData = async () => {
-        try {
-          const response = await axiosInstance.get(
-            `http://localhost:4000/users/${userId}`
-          );
-          setUser(response.data.user);
-        } catch (err) {}
-      };
-
-      fetchUserData();
-    } else {
+      dispatch(getProfile({ userId }));
     }
-  }, [preview]);
+  }, [userId]);
 
   useEffect(() => {
-    if (user) {
-      setUsername(user.username);
-      setEmail(user.email);
+    if (dataProfile) {
+      setUsername(dataProfile?.user.username);
+      setEmail(dataProfile?.user.email);
     }
-  }, [user]);
+  }, [dataProfile]);
+
+  useEffect(() => {
+    if (dataEditProfile) {
+      toast(dataEditProfile.message, { type: "success" });
+    }
+
+    if (dataUploadAvatar && userId) {
+      toast(dataUploadAvatar.message, { type: "success" });
+      dispatch(getProfile({ userId }));
+      dispatch(resetDataUploadAvatar());
+    }
+  }, [dataEditProfile, dataUploadAvatar, userId]);
 
   // Hàm xử lý upload
   const handleUpload = async () => {
-    // Tạo FormData để gửi file
-    const formData = new FormData();
-    if (user && avatar) {
-      formData.append("userId", `${user.id}`); // Thêm ID người dùng
-      formData.append("avatar", avatar); // Thêm file avatar
-    }
-
-    try {
-      const response = await axiosInstance.put(
-        "http://localhost:4000/users/upload-avatar",
-        formData, // Gửi formData thay vì object
-        {
-          headers: {
-            "Content-Type": "multipart/form-data", // Đặt Content-Type cho multipart
-          },
-        }
-      );
-      if (response.data) {
-        setAvatar(null);
-        setPreview(null);
-        toast("Cập nhật thành công", {
-          type: "success",
-        });
-      }
-    } catch (error) {
-      console.error("Lỗi khi upload:", error);
+    if (dataProfile && avatar) {
+      dispatch(uploadAvatar({ userId: dataProfile?.user.id, avatar: avatar }));
+      setAvatar(null);
     }
   };
 
   const handleUpdate = async () => {
     try {
-      const response = await axiosInstance.put(
-        "http://localhost:4000/users/update",
-        {
-          username,
-          email,
-          userId: user.id,
-        }
+      dispatch(
+        updateProfile({ email, username, userId: dataProfile?.user.id })
       );
-
-      if (response.data) {
-        console.log(response.data);
-        setUser(response.data.user);
-        toast("Cập nhật thành công", {
-          type: "success",
-        });
-      }
     } catch (err: any) {
       console.log(err);
     }
@@ -119,7 +87,7 @@ export default function Index() {
           <label>
             <img
               className="rounded-full h-[80px] w-[80px] border border-[#dbd2d2] shadow-lg cursor-pointer"
-              src={`http://localhost:4000/uploads/${user.avatar}`}
+              src={`http://localhost:4000/uploads/${dataProfile?.user?.avatar}`}
               alt="Avatar"
             />
             <input
@@ -183,11 +151,6 @@ export default function Index() {
             onChange={(e) => setUsername(e.target.value)}
           />
           <Button
-            disabled={
-              !email ||
-              !username ||
-              (email === user.email && username === user.username)
-            }
             onClick={handleUpdate}
             sx={{
               height: "50px",
